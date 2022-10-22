@@ -6,8 +6,44 @@ import pandas as pd
 import requests
 from arcgis2geojson import arcgis2geojson
 from pkg_resources import packaging
+import configparser
+import os
+
 
 GEOPANDAS_VERSION = packaging.version.parse(gpd.__version__)
+
+
+def get_token(token_url):
+    """
+    Added by @wptff
+    Generates a token for a REST API that requires authentication
+    or dataset that is not public. 
+    
+    Parameters:
+
+    token_url: string of the URL to request a token.
+    username: string of username for ArcGIS Online organization
+    password: string of password for ArcGIS Online Organization
+
+    """
+    settingsFile = r'esri2gpd\settings.ini'
+    if os.path.isfile(settingsFile):
+        config = configparser.ConfigParser()
+        config.read(settingsFile)
+    else:
+        print('No settings file found. Please create a settings.ini file in the same directory as this script.')
+        
+    params = dict(
+        username = config.get('AGOL', 'USERNAME'),
+        password = config.get('AGOL', 'PASSWORD'),
+        referer="https://www.arcgis.com",
+        f="json",
+    )
+    response = requests.post(token_url, data=params).json()['token']
+    
+    return response
+
+
 
 
 def _get_json_safely(response):
